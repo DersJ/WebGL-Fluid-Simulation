@@ -29,7 +29,7 @@ resizeCanvas();
 
 let config = {
     SIM_RESOLUTION: 128,
-    DYE_RESOLUTION: 1024,
+    DYE_RESOLUTION: 4096,
     CAPTURE_RESOLUTION: 512,
     DENSITY_DISSIPATION: 1,
     VELOCITY_DISSIPATION: 0.2,
@@ -53,7 +53,15 @@ let config = {
     SUNRAYS: true,
     SUNRAYS_RESOLUTION: 196,
     SUNRAYS_WEIGHT: 1.0,
+    SATURATION: 1,
+    CHANGE_HUE: true,
+    HUE: 1.0,
+    HUE_SPEED: 4.0,
+    HUE_STEP: 1,
+    HUE_LEVELS: 25,
 }
+
+let isRPressed = false;
 
 function pointerPrototype () {
     this.id = -1;
@@ -178,6 +186,9 @@ function supportRenderTextureFormat (gl, internalFormat, format, type) {
 
 function startGUI () {
     var gui = new dat.GUI({ width: 300 });
+    gui.add(config, 'SATURATION', 0, 1.0).name('saturation')
+    gui.add(config, 'HUE_SPEED', 1.0, 25.0).name('hue speed').listen();
+    gui.add(config, 'CHANGE_HUE').name('change hue').listen();
     gui.add(config, 'DYE_RESOLUTION', { 'high': 1024, 'medium': 512, 'low': 256, 'very low': 128 }).name('quality').onFinishChange(initFramebuffers);
     gui.add(config, 'SIM_RESOLUTION', { '32': 32, '64': 64, '128': 128, '256': 256 }).name('sim resolution').onFinishChange(initFramebuffers);
     gui.add(config, 'DENSITY_DISSIPATION', 0, 4.0).name('density diffusion');
@@ -1475,10 +1486,28 @@ window.addEventListener('touchend', e => {
 });
 
 window.addEventListener('keydown', e => {
+    const charList = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const key = e.key.toLowerCase();
+
+    if (charList.indexOf(key) === -1) return;
+
+    
+    if (Number(key))
+        config.HUE_SPEED = isRPressed ? 5 * Number(key) : config.HUE_SPEED;
+
+    if (e.code === 'KeyR')
+        isRPressed = true;
     if (e.code === 'KeyP')
         config.PAUSED = !config.PAUSED;
+    if (e.code === 'KeyS')
+        config.CHANGE_HUE = !config.CHANGE_HUE;
     if (e.key === ' ')
         splatStack.push(parseInt(Math.random() * 20) + 5);
+});
+
+window.addEventListener('keyup', e => {
+    if (e.code === 'KeyR')
+        isRPressed = false;
 });
 
 function updatePointerDownData (pointer, id, posX, posY) {
@@ -1521,7 +1550,30 @@ function correctDeltaY (delta) {
 }
 
 function generateColor () {
-    let c = HSVtoRGB(Math.random(), 1.0, 1.0);
+    console.log(config.CHANGE_HUE);
+    if(config.CHANGE_HUE) {
+        if(config.HUE_STEP + config.HUE_SPEED > 25){
+            config.HUE += .05 + (Math.random() * .02);
+            console.log(config.HUE);
+            if(config.HUE >= 1){
+                console.log('subtracting 1!')
+                config.HUE -= 1;
+
+            }
+                
+            config.HUE_STEP = 1;
+
+        }
+        else {
+            config.HUE_STEP++;
+        }
+
+    }
+   
+
+    //config.HUE = config.CHANGE_HUE ? Math.random() : config.HUE;
+    // console.log(config.HUE)
+    let c = HSVtoRGB(config.HUE, config.SATURATION, 1.0);
     c.r *= 0.15;
     c.g *= 0.15;
     c.b *= 0.15;
