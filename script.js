@@ -218,6 +218,14 @@ function startGUI () {
     captureFolder.add(config, 'TRANSPARENT').name('transparent');
     captureFolder.add({ fun: captureScreenshot }, 'fun').name('take screenshot');
 
+    let savePreset = gui.add({ fun : () => {
+        console.log(JSON.stringify(config))
+    }}, 'fun').name('Save Preset')
+
+    let loadPreset = gui.add({ fun : () => {
+        config = JSON.parse('{"SIM_RESOLUTION":128,"DYE_RESOLUTION":1024,"CAPTURE_RESOLUTION":512,"DENSITY_DISSIPATION":0.2740476842970677,"VELOCITY_DISSIPATION":0.765141134557413,"PRESSURE":0.8,"PRESSURE_ITERATIONS":20,"CURL":0,"SPLAT_RADIUS":0.7463277610304193,"SPLAT_FORCE":6000,"SHADING":true,"COLORFUL":true,"COLOR_UPDATE_SPEED":10,"PAUSED":false,"BACK_COLOR":{"r":0,"g":0,"b":0},"TRANSPARENT":false,"BLOOM":true,"BLOOM_ITERATIONS":8,"BLOOM_RESOLUTION":256,"BLOOM_INTENSITY":0.8,"BLOOM_THRESHOLD":0.6,"BLOOM_SOFT_KNEE":0.7,"SUNRAYS":true,"SUNRAYS_RESOLUTION":196,"SUNRAYS_WEIGHT":1}')
+    }}, 'fun').name('Load Preset')
+
     let github = gui.add({ fun : () => {
         window.open('https://github.com/PavelDoGreat/WebGL-Fluid-Simulation');
         ga('send', 'event', 'link button', 'github');
