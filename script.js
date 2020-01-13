@@ -59,6 +59,7 @@ let config = {
     HUE_SPEED: 4.0,
     HUE_STEP: 1,
     HUE_LEVELS: 25,
+    VIBRANCE: .75,
 }
 
 let isRPressed = false;
@@ -187,6 +188,8 @@ function supportRenderTextureFormat (gl, internalFormat, format, type) {
 function startGUI () {
     var gui = new dat.GUI({ width: 300 });
     gui.add(config, 'SATURATION', 0, 1.0).name('saturation')
+    gui.add(config, 'VIBRANCE', 0, 1.0).name('vibrance')
+
     gui.add(config, 'HUE_SPEED', 1.0, 25.0).name('hue speed').listen();
     gui.add(config, 'CHANGE_HUE').name('change hue').listen();
     gui.add(config, 'DYE_RESOLUTION', { 'high': 1024, 'medium': 512, 'low': 256, 'very low': 128 }).name('quality').onFinishChange(initFramebuffers);
@@ -1558,15 +1561,11 @@ function correctDeltaY (delta) {
 }
 
 function generateColor () {
-    console.log(config.CHANGE_HUE);
     if(config.CHANGE_HUE) {
         if(config.HUE_STEP + config.HUE_SPEED > 25){
             config.HUE += .05 + (Math.random() * .02);
-            console.log(config.HUE);
             if(config.HUE >= 1){
-                console.log('subtracting 1!')
                 config.HUE -= 1;
-
             }
                 
             config.HUE_STEP = 1;
@@ -1578,10 +1577,7 @@ function generateColor () {
 
     }
    
-
-    //config.HUE = config.CHANGE_HUE ? Math.random() : config.HUE;
-    // console.log(config.HUE)
-    let c = HSVtoRGB(config.HUE, config.SATURATION, 1.0);
+    let c = HSVtoRGB(config.HUE, config.SATURATION, config.VIBRANCE);
     c.r *= 0.15;
     c.g *= 0.15;
     c.b *= 0.15;
