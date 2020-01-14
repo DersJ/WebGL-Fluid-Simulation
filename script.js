@@ -187,28 +187,29 @@ function supportRenderTextureFormat (gl, internalFormat, format, type) {
 
 function startGUI () {
     var gui = new dat.GUI({ width: 300 });
-    gui.add(config, 'SATURATION', 0, 1.0).name('saturation')
-    gui.add(config, 'VIBRANCE', 0, 1.0).name('vibrance')
+    gui.add(config, 'SATURATION', 0, 1.0).name('saturation').listen();
+    gui.add(config, 'VIBRANCE', 0, 1.0).name('vibrance').listen();
 
     gui.add(config, 'HUE_SPEED', 1.0, 25.0).name('hue speed').listen();
     gui.add(config, 'CHANGE_HUE').name('change hue').listen();
-    gui.add(config, 'DYE_RESOLUTION', { 'high': 1024, 'medium': 512, 'low': 256, 'very low': 128 }).name('quality').onFinishChange(initFramebuffers);
-    gui.add(config, 'SIM_RESOLUTION', { '32': 32, '64': 64, '128': 128, '256': 256 }).name('sim resolution').onFinishChange(initFramebuffers);
-    gui.add(config, 'DENSITY_DISSIPATION', 0, 4.0).name('density diffusion');
-    gui.add(config, 'VELOCITY_DISSIPATION', 0, 4.0).name('velocity diffusion');
-    gui.add(config, 'PRESSURE', 0.0, 1.0).name('pressure');
-    gui.add(config, 'CURL', 0, 50).name('vorticity').step(1);
-    gui.add(config, 'SPLAT_RADIUS', 0.01, 1.0).name('splat radius');
-    gui.add(config, 'SHADING').name('shading').onFinishChange(updateKeywords);
-    gui.add(config, 'COLORFUL').name('colorful');
+    gui.add(config, 'DYE_RESOLUTION', { 'high': 1024, 'medium': 512, 'low': 256, 'very low': 128 }).name('quality').onFinishChange(initFramebuffers).listen();
+    gui.add(config, 'SIM_RESOLUTION', { '32': 32, '64': 64, '128': 128, '256': 256 }).name('sim resolution').onFinishChange(initFramebuffers).listen();
+    gui.add(config, 'DENSITY_DISSIPATION', 0, 4.0).name('density diffusion').listen();
+    gui.add(config, 'VELOCITY_DISSIPATION', 0, 4.0).name('velocity diffusion').listen();
+    gui.add(config, 'PRESSURE', 0.0, 1.0).name('pressure').listen();
+    gui.add(config, 'CURL', 0, 50).name('vorticity').step(1).listen();
+    gui.add(config, 'SPLAT_RADIUS', 0.01, 1.0).name('splat radius').listen();
+    gui.add(config, 'SHADING').name('shading').onFinishChange(updateKeywords).listen();
+    gui.add(config, 'COLORFUL').name('colorful').listen();;
     gui.add(config, 'PAUSED').name('paused').listen();
+
 
     gui.add({ fun: () => {
         splatStack.push(parseInt(Math.random() * 20) + 5);
     } }, 'fun').name('Random splats');
 
     let bloomFolder = gui.addFolder('Bloom');
-    bloomFolder.add(config, 'BLOOM').name('enabled').onFinishChange(updateKeywords);
+    bloomFolder.add(config, 'BLOOM').name('enabled').onFinishChange(updateKeywords).listen();
     bloomFolder.add(config, 'BLOOM_INTENSITY', 0.1, 2.0).name('intensity');
     bloomFolder.add(config, 'BLOOM_THRESHOLD', 0.0, 1.0).name('threshold');
 
@@ -221,12 +222,25 @@ function startGUI () {
     captureFolder.add(config, 'TRANSPARENT').name('transparent');
     captureFolder.add({ fun: captureScreenshot }, 'fun').name('take screenshot');
 
+    let presetFolder = gui.addFolder('Presets');
+    PRESETS.forEach((preset, index) => {
+        presetFolder.add({ fun : () => {
+            Object.keys(preset.config).forEach(key => {
+                config[key] = preset.config[key];
+            })
+        }}, 'fun').name(preset.name);
+    });
+    console.log(PRESETS);
+
     let savePreset = gui.add({ fun : () => {
-        console.log(JSON.stringify(config))
+        console.log(JSON.stringify(config, null, 2))
     }}, 'fun').name('Save Preset')
 
     let loadPreset = gui.add({ fun : () => {
-        config = JSON.parse('{"SIM_RESOLUTION":128,"DYE_RESOLUTION":1024,"CAPTURE_RESOLUTION":512,"DENSITY_DISSIPATION":0.2740476842970677,"VELOCITY_DISSIPATION":0.765141134557413,"PRESSURE":0.8,"PRESSURE_ITERATIONS":20,"CURL":0,"SPLAT_RADIUS":0.7463277610304193,"SPLAT_FORCE":6000,"SHADING":true,"COLORFUL":true,"COLOR_UPDATE_SPEED":10,"PAUSED":false,"BACK_COLOR":{"r":0,"g":0,"b":0},"TRANSPARENT":false,"BLOOM":true,"BLOOM_ITERATIONS":8,"BLOOM_RESOLUTION":256,"BLOOM_INTENSITY":0.8,"BLOOM_THRESHOLD":0.6,"BLOOM_SOFT_KNEE":0.7,"SUNRAYS":true,"SUNRAYS_RESOLUTION":196,"SUNRAYS_WEIGHT":1}')
+        let newConfig = JSON.parse('{"SIM_RESOLUTION":128,"DYE_RESOLUTION":4096,"CAPTURE_RESOLUTION":512,"DENSITY_DISSIPATION":1.2562345848177583,"VELOCITY_DISSIPATION":1.6070156207180049,"PRESSURE":0.05097286927925459,"PRESSURE_ITERATIONS":20,"CURL":50,"SPLAT_RADIUS":1,"SPLAT_FORCE":6000,"SHADING":true,"COLORFUL":true,"COLOR_UPDATE_SPEED":10,"PAUSED":false,"BACK_COLOR":{"r":0,"g":0,"b":0},"TRANSPARENT":false,"BLOOM":false,"BLOOM_ITERATIONS":8,"BLOOM_RESOLUTION":256,"BLOOM_INTENSITY":0.8,"BLOOM_THRESHOLD":0.6,"BLOOM_SOFT_KNEE":0.7,"SUNRAYS":false,"SUNRAYS_RESOLUTION":196,"SUNRAYS_WEIGHT":1,"SATURATION":1,"CHANGE_HUE":true,"HUE":0.4594412648688852,"HUE_SPEED":20,"HUE_STEP":6,"HUE_LEVELS":25,"VIBRANCE":0.75}')
+        Object.keys(newConfig).forEach(key => {
+            config[key] = newConfig[key];
+        })
     }}, 'fun').name('Load Preset')
 
     let github = gui.add({ fun : () => {
@@ -1265,6 +1279,7 @@ function step (dt) {
 }
 
 function render (target) {
+    console.log(config.BLOOM);
     if (config.BLOOM)
         applyBloom(dye.read, bloom);
     if (config.SUNRAYS) {
