@@ -42,7 +42,7 @@ let config = {
     COLORFUL: true,
     COLOR_UPDATE_SPEED: 10,
     PAUSED: false,
-    BACK_COLOR: { r: 0, g: 0, b: 0 },
+    BACK_COLOR: { r: 256, g: 256, b: 256 },
     TRANSPARENT: false,
     BLOOM: true,
     BLOOM_ITERATIONS: 8,
@@ -228,9 +228,9 @@ function startGUI () {
             Object.keys(preset.config).forEach(key => {
                 config[key] = preset.config[key];
             })
-        }}, 'fun').name(preset.name);
+        }}, 'fun').name(`(${index + 1}) ${preset.name}`);
     });
-    console.log(PRESETS);
+    // console.log(PRESETS);
 
     let savePreset = gui.add({ fun : () => {
         console.log(JSON.stringify(config, null, 2))
@@ -1279,7 +1279,6 @@ function step (dt) {
 }
 
 function render (target) {
-    console.log(config.BLOOM);
     if (config.BLOOM)
         applyBloom(dye.read, bloom);
     if (config.SUNRAYS) {
@@ -1432,6 +1431,7 @@ function multipleSplats (amount) {
 }
 
 function splat (x, y, dx, dy, color) {
+    console.log(dx)
     gl.viewport(0, 0, velocity.width, velocity.height);
     splatProgram.bind();
     gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
@@ -1514,12 +1514,23 @@ window.addEventListener('touchend', e => {
 window.addEventListener('keydown', e => {
     const charList = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const key = e.key.toLowerCase();
+    const keycode = e.keyCode;
 
     if (charList.indexOf(key) === -1) return;
 
+    if (keycode >= 96 && keycode <= 105) {
+        directionalSplat(Number(key));
+        return;
+    }
     
-    if (Number(key))
-        config.HUE_SPEED = isRPressed ? 5 * Number(key) : config.HUE_SPEED;
+    if (Number(key)) {
+        if (isRPressed) {
+            config.HUE_SPEED = Number(key);
+        } else {
+            loadPreset(Number(key) - 1);
+        }
+    }
+
 
     if (e.code === 'KeyR')
         isRPressed = true;
@@ -1673,3 +1684,58 @@ function hashCode (s) {
     }
     return hash;
 };
+
+function loadPreset (index) {
+    const preset = PRESETS[index]
+    Object.keys(preset.config).forEach(key => {
+        config[key] = preset.config[key];
+    })
+}
+
+function directionalSplat(key) {
+    const keyToVelocities = {
+        1: { dx: -0.8,  dy: -0.8 },
+        2: { dx: 0,     dy: -1 },
+        3: { dx: 0.8,   dy: -0.8 },
+        4: { dx: -1,    dy: 0 },
+        5: { dx: 0,     dy: 0 },
+        6: { dx: 1,     dy: 0 },
+        7: { dx: -0.8,  dy: 0.8 },
+        8: { dx: 0,     dy: 1 },
+        9: { dx: 0.8,   dy:0.8 },
+    }
+    const keyToLocation2 = [
+        {},
+        {x: .25, y: .25},
+        {x: .5, y: .25},
+        {x: .75, y: .25},
+        {x: .25, y: .5},
+        {x: .5, y: .5},
+        {x: .75, y: .5},
+        {x: .25, y: .75},
+        {x: .5, y: .75},
+        {x: .75, y: .75},
+    ]
+    const keyToLocation = [
+        {},
+        {x: .15, y: .15},
+        {x: .5, y: .15},
+        {x: .85, y: .15},
+        {x: .15, y: .5},
+        {x: .5, y: .5},
+        {x: .85, y: .5},
+        {x: .15, y: .85},
+        {x: .5, y: .85},
+        {x: .85, y: .75},
+    ]
+    const color = generateColor();
+    const d = keyToVelocities[key];
+    const x = keyToLocation[key].x;
+    const y = keyToLocation[key].y;
+
+    color.r *= 10.0;
+    color.g *= 10.0;
+    color.b *= 10.0;
+    splat(x, y, d.dx * -1000, d.dy * -1000, color);
+
+}

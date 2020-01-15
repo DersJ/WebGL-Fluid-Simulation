@@ -204,5 +204,46 @@ var PRESETS = [
       "HUE_LEVELS": 25,
       "VIBRANCE": 0.5508358454371061
     }
+  },
+  {
+    name: 'jellyfish',
+    config: {
+      "SIM_RESOLUTION": 128,
+      "DYE_RESOLUTION": 4096,
+      "CAPTURE_RESOLUTION": 512,
+      "DENSITY_DISSIPATION": 3.15045217867909,
+      "VELOCITY_DISSIPATION": 1.396546999177857,
+      "PRESSURE": 0.8840778295423404,
+      "PRESSURE_ITERATIONS": 20,
+      "CURL": 11,
+      "SPLAT_RADIUS": 0.25,
+      "SPLAT_FORCE": 6000,
+      "SHADING": true,
+      "COLORFUL": true,
+      "COLOR_UPDATE_SPEED": 10,
+      "PAUSED": false,
+      "BACK_COLOR": {
+        "r": 0,
+        "g": 0,
+        "b": 0
+      },
+      "TRANSPARENT": false,
+      "BLOOM": true,
+      "BLOOM_ITERATIONS": 8,
+      "BLOOM_RESOLUTION": 256,
+      "BLOOM_INTENSITY": 0.8,
+      "BLOOM_THRESHOLD": 0.6,
+      "BLOOM_SOFT_KNEE": 0.7,
+      "SUNRAYS": true,
+      "SUNRAYS_RESOLUTION": 196,
+      "SUNRAYS_WEIGHT": 1,
+      "SATURATION": 1,
+      "CHANGE_HUE": true,
+      "HUE": 0.4478882236811756,
+      "HUE_SPEED": 4,
+      "HUE_STEP": 11,
+      "HUE_LEVELS": 25,
+      "VIBRANCE": 0.75
+    }
   }
 ]
