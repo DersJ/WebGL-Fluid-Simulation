@@ -29,7 +29,7 @@ resizeCanvas();
 
 let config = {
     SIM_RESOLUTION: 128,
-    DYE_RESOLUTION: 1024,
+    DYE_RESOLUTION: 4096,
     CAPTURE_RESOLUTION: 512,
     DENSITY_DISSIPATION: 1,
     VELOCITY_DISSIPATION: 0.2,
@@ -42,7 +42,7 @@ let config = {
     COLORFUL: true,
     COLOR_UPDATE_SPEED: 10,
     PAUSED: false,
-    BACK_COLOR: { r: 0, g: 0, b: 0 },
+    BACK_COLOR: { r: 256, g: 256, b: 256 },
     TRANSPARENT: false,
     BLOOM: true,
     BLOOM_ITERATIONS: 8,
@@ -53,7 +53,16 @@ let config = {
     SUNRAYS: true,
     SUNRAYS_RESOLUTION: 196,
     SUNRAYS_WEIGHT: 1.0,
+    SATURATION: 1,
+    CHANGE_HUE: true,
+    HUE: 1.0,
+    HUE_SPEED: 4.0,
+    HUE_STEP: 1,
+    HUE_LEVELS: 25,
+    VIBRANCE: .75,
 }
+
+let isRPressed = false;
 
 function pointerPrototype () {
     this.id = -1;
@@ -178,23 +187,29 @@ function supportRenderTextureFormat (gl, internalFormat, format, type) {
 
 function startGUI () {
     var gui = new dat.GUI({ width: 300 });
-    gui.add(config, 'DYE_RESOLUTION', { 'high': 1024, 'medium': 512, 'low': 256, 'very low': 128 }).name('quality').onFinishChange(initFramebuffers);
-    gui.add(config, 'SIM_RESOLUTION', { '32': 32, '64': 64, '128': 128, '256': 256 }).name('sim resolution').onFinishChange(initFramebuffers);
-    gui.add(config, 'DENSITY_DISSIPATION', 0, 4.0).name('density diffusion');
-    gui.add(config, 'VELOCITY_DISSIPATION', 0, 4.0).name('velocity diffusion');
-    gui.add(config, 'PRESSURE', 0.0, 1.0).name('pressure');
-    gui.add(config, 'CURL', 0, 50).name('vorticity').step(1);
-    gui.add(config, 'SPLAT_RADIUS', 0.01, 1.0).name('splat radius');
-    gui.add(config, 'SHADING').name('shading').onFinishChange(updateKeywords);
-    gui.add(config, 'COLORFUL').name('colorful');
+    gui.add(config, 'SATURATION', 0, 1.0).name('saturation').listen();
+    gui.add(config, 'VIBRANCE', 0, 1.0).name('vibrance').listen();
+
+    gui.add(config, 'HUE_SPEED', 1.0, 25.0).name('hue speed').listen();
+    gui.add(config, 'CHANGE_HUE').name('change hue').listen();
+    gui.add(config, 'DYE_RESOLUTION', { 'high': 1024, 'medium': 512, 'low': 256, 'very low': 128 }).name('quality').onFinishChange(initFramebuffers).listen();
+    gui.add(config, 'SIM_RESOLUTION', { '32': 32, '64': 64, '128': 128, '256': 256 }).name('sim resolution').onFinishChange(initFramebuffers).listen();
+    gui.add(config, 'DENSITY_DISSIPATION', 0, 4.0).name('density diffusion').listen();
+    gui.add(config, 'VELOCITY_DISSIPATION', 0, 4.0).name('velocity diffusion').listen();
+    gui.add(config, 'PRESSURE', 0.0, 1.0).name('pressure').listen();
+    gui.add(config, 'CURL', 0, 50).name('vorticity').step(1).listen();
+    gui.add(config, 'SPLAT_RADIUS', 0.01, 1.0).name('splat radius').listen();
+    gui.add(config, 'SHADING').name('shading').onFinishChange(updateKeywords).listen();
+    gui.add(config, 'COLORFUL').name('colorful').listen();;
     gui.add(config, 'PAUSED').name('paused').listen();
+
 
     gui.add({ fun: () => {
         splatStack.push(parseInt(Math.random() * 20) + 5);
     } }, 'fun').name('Random splats');
 
     let bloomFolder = gui.addFolder('Bloom');
-    bloomFolder.add(config, 'BLOOM').name('enabled').onFinishChange(updateKeywords);
+    bloomFolder.add(config, 'BLOOM').name('enabled').onFinishChange(updateKeywords).listen();
     bloomFolder.add(config, 'BLOOM_INTENSITY', 0.1, 2.0).name('intensity');
     bloomFolder.add(config, 'BLOOM_THRESHOLD', 0.0, 1.0).name('threshold');
 
@@ -206,6 +221,27 @@ function startGUI () {
     captureFolder.addColor(config, 'BACK_COLOR').name('background color');
     captureFolder.add(config, 'TRANSPARENT').name('transparent');
     captureFolder.add({ fun: captureScreenshot }, 'fun').name('take screenshot');
+
+    let presetFolder = gui.addFolder('Presets');
+    PRESETS.forEach((preset, index) => {
+        presetFolder.add({ fun : () => {
+            Object.keys(preset.config).forEach(key => {
+                config[key] = preset.config[key];
+            })
+        }}, 'fun').name(`(${index + 1}) ${preset.name}`);
+    });
+    // console.log(PRESETS);
+
+    let savePreset = gui.add({ fun : () => {
+        console.log(JSON.stringify(config, null, 2))
+    }}, 'fun').name('Save Preset')
+
+    let loadPreset = gui.add({ fun : () => {
+        let newConfig = JSON.parse('{"SIM_RESOLUTION":128,"DYE_RESOLUTION":4096,"CAPTURE_RESOLUTION":512,"DENSITY_DISSIPATION":1.2562345848177583,"VELOCITY_DISSIPATION":1.6070156207180049,"PRESSURE":0.05097286927925459,"PRESSURE_ITERATIONS":20,"CURL":50,"SPLAT_RADIUS":1,"SPLAT_FORCE":6000,"SHADING":true,"COLORFUL":true,"COLOR_UPDATE_SPEED":10,"PAUSED":false,"BACK_COLOR":{"r":0,"g":0,"b":0},"TRANSPARENT":false,"BLOOM":false,"BLOOM_ITERATIONS":8,"BLOOM_RESOLUTION":256,"BLOOM_INTENSITY":0.8,"BLOOM_THRESHOLD":0.6,"BLOOM_SOFT_KNEE":0.7,"SUNRAYS":false,"SUNRAYS_RESOLUTION":196,"SUNRAYS_WEIGHT":1,"SATURATION":1,"CHANGE_HUE":true,"HUE":0.4594412648688852,"HUE_SPEED":20,"HUE_STEP":6,"HUE_LEVELS":25,"VIBRANCE":0.75}')
+        Object.keys(newConfig).forEach(key => {
+            config[key] = newConfig[key];
+        })
+    }}, 'fun').name('Load Preset')
 
     let github = gui.add({ fun : () => {
         window.open('https://github.com/PavelDoGreat/WebGL-Fluid-Simulation');
@@ -1395,6 +1431,7 @@ function multipleSplats (amount) {
 }
 
 function splat (x, y, dx, dy, color) {
+    console.log(dx)
     gl.viewport(0, 0, velocity.width, velocity.height);
     splatProgram.bind();
     gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
@@ -1475,10 +1512,39 @@ window.addEventListener('touchend', e => {
 });
 
 window.addEventListener('keydown', e => {
+    const charList = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const key = e.key.toLowerCase();
+    const keycode = e.keyCode;
+
+    if (charList.indexOf(key) === -1) return;
+
+    if (keycode >= 96 && keycode <= 105) {
+        directionalSplat(Number(key));
+        return;
+    }
+    
+    if (Number(key)) {
+        if (isRPressed) {
+            config.HUE_SPEED = Number(key);
+        } else {
+            loadPreset(Number(key) - 1);
+        }
+    }
+
+
+    if (e.code === 'KeyR')
+        isRPressed = true;
     if (e.code === 'KeyP')
         config.PAUSED = !config.PAUSED;
+    if (e.code === 'KeyS')
+        config.CHANGE_HUE = !config.CHANGE_HUE;
     if (e.key === ' ')
         splatStack.push(parseInt(Math.random() * 20) + 5);
+});
+
+window.addEventListener('keyup', e => {
+    if (e.code === 'KeyR')
+        isRPressed = false;
 });
 
 function updatePointerDownData (pointer, id, posX, posY) {
@@ -1521,7 +1587,23 @@ function correctDeltaY (delta) {
 }
 
 function generateColor () {
-    let c = HSVtoRGB(Math.random(), 1.0, 1.0);
+    if(config.CHANGE_HUE) {
+        if(config.HUE_STEP + config.HUE_SPEED > 25){
+            config.HUE += .05 + (Math.random() * .02);
+            if(config.HUE >= 1){
+                config.HUE -= 1;
+            }
+                
+            config.HUE_STEP = 1;
+
+        }
+        else {
+            config.HUE_STEP++;
+        }
+
+    }
+   
+    let c = HSVtoRGB(config.HUE, config.SATURATION, config.VIBRANCE);
     c.r *= 0.15;
     c.g *= 0.15;
     c.b *= 0.15;
@@ -1602,3 +1684,58 @@ function hashCode (s) {
     }
     return hash;
 };
+
+function loadPreset (index) {
+    const preset = PRESETS[index]
+    Object.keys(preset.config).forEach(key => {
+        config[key] = preset.config[key];
+    })
+}
+
+function directionalSplat(key) {
+    const keyToVelocities = {
+        1: { dx: -0.8,  dy: -0.8 },
+        2: { dx: 0,     dy: -1 },
+        3: { dx: 0.8,   dy: -0.8 },
+        4: { dx: -1,    dy: 0 },
+        5: { dx: 0,     dy: 0 },
+        6: { dx: 1,     dy: 0 },
+        7: { dx: -0.8,  dy: 0.8 },
+        8: { dx: 0,     dy: 1 },
+        9: { dx: 0.8,   dy:0.8 },
+    }
+    const keyToLocation2 = [
+        {},
+        {x: .25, y: .25},
+        {x: .5, y: .25},
+        {x: .75, y: .25},
+        {x: .25, y: .5},
+        {x: .5, y: .5},
+        {x: .75, y: .5},
+        {x: .25, y: .75},
+        {x: .5, y: .75},
+        {x: .75, y: .75},
+    ]
+    const keyToLocation = [
+        {},
+        {x: .15, y: .15},
+        {x: .5, y: .15},
+        {x: .85, y: .15},
+        {x: .15, y: .5},
+        {x: .5, y: .5},
+        {x: .85, y: .5},
+        {x: .15, y: .85},
+        {x: .5, y: .85},
+        {x: .85, y: .75},
+    ]
+    const color = generateColor();
+    const d = keyToVelocities[key];
+    const x = keyToLocation[key].x;
+    const y = keyToLocation[key].y;
+
+    color.r *= 10.0;
+    color.g *= 10.0;
+    color.b *= 10.0;
+    splat(x, y, d.dx * -1000, d.dy * -1000, color);
+
+}
