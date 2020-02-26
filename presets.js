@@ -2,7 +2,7 @@ var PRESETS = [
   {
     "name": "brainstem",
     "config": {
-      "SIM_RESOLUTION": 128,
+      "SIM_RESOLUTION": 256,
       "DYE_RESOLUTION": 4096,
       "CAPTURE_RESOLUTION": 512,
       "DENSITY_DISSIPATION": 0.48451630583721567,
@@ -44,7 +44,7 @@ var PRESETS = [
   {
     "name": "liquid",
     "config": {
-      "SIM_RESOLUTION": 128,
+      "SIM_RESOLUTION": 256,
       "DYE_RESOLUTION": 4096,
       "CAPTURE_RESOLUTION": 512,
       "DENSITY_DISSIPATION": 0.48451630583721567,
@@ -85,7 +85,7 @@ var PRESETS = [
   {
     name: "squiggly",
     config: {
-      "SIM_RESOLUTION": 128,
+      "SIM_RESOLUTION": 256,
       "DYE_RESOLUTION": 4096,
       "CAPTURE_RESOLUTION": 512,
       "DENSITY_DISSIPATION": 1.2562345848177583,
@@ -126,7 +126,7 @@ var PRESETS = [
   {
     name: 'default',
     config: {
-      "SIM_RESOLUTION": 128,
+      "SIM_RESOLUTION": 256,
       "DYE_RESOLUTION": 4096,
       "CAPTURE_RESOLUTION": 512,
       "DENSITY_DISSIPATION": 1,
@@ -167,7 +167,7 @@ var PRESETS = [
   {
     name: 'metal',
     config: {
-      "SIM_RESOLUTION": 128,
+      "SIM_RESOLUTION": 256,
       "DYE_RESOLUTION": 4096,
       "CAPTURE_RESOLUTION": 512,
       "DENSITY_DISSIPATION": 0.13373526993696902,
@@ -208,7 +208,7 @@ var PRESETS = [
   {
     name: 'jellyfish',
     config: {
-      "SIM_RESOLUTION": 128,
+      "SIM_RESOLUTION": 256,
       "DYE_RESOLUTION": 4096,
       "CAPTURE_RESOLUTION": 512,
       "DENSITY_DISSIPATION": 3.15045217867909,
